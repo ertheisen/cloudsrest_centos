@@ -5,7 +5,7 @@ From:centos:centos7.4.1708
 Singularity container containing following apps for ChIP-seq and CUT&RUN processing.
  fastqc_pre : FastQC pre-trim
  trim_qc : Fastq trimming with Trim Galore and FastQC post trim
- bam_to_bed_bg_bw: Generate downstream files for archival files using same pipeline - assumes hg19 alignment
+ bams: Generate downstream files for archival files using same pipeline - assumes hg19 alignment
  rnaseq_STAR: Use to generate readcounts from fastq data using STAR; requires loading the STAR index in /genomes/STAR and the gff file in genomes/anno
  rnaseq_full: full pipeline from fastqc to readcounts
 
@@ -206,7 +206,7 @@ Singularity container containing following apps for ChIP-seq and CUT&RUN process
 %apprun trim_qc
 	python /appscripts/trim_qc.py
 
-%apprun bam_to_bed_bg_bw
+%apprun bams
 	python /appscripts/bam_to_bed_bg_bw.py
 
 %apprun rnaseq_STAR
