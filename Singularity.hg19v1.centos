@@ -200,6 +200,7 @@ Singularity container containing following apps for ChIP-seq and CUT&RUN process
 	mv /rnaseq_STAR.py /appscripts/
 	mv /rnaseq.py /appscripts/
 
+
 %apprun fastqc_pre
 	python /appscripts/fastqc_pre.py
 
