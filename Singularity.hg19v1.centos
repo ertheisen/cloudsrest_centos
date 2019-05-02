@@ -104,6 +104,7 @@ Singularity container containing following apps for ChIP-seq and CUT&RUN process
 				   python36u-devel \
 				   python36u-setuptools
 
+
 	python3.6 -m pip install wheel
 	python3.6 -m pip install jupyter
 	python3.6 -m pip install pandas
