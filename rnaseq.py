@@ -226,7 +226,7 @@ print '\n'
 sam_names = []
 
 for i in range(len(input_files_R1)):
-	sam_name = input_files_R1[i].split('_L0')[0] + '.sam'
+	sam_name = input_files_R1[i].split('.f')[0] + '.sam'
 	sam_names.append(sam_name)
 
 print 'Output sam filenames for data species:'

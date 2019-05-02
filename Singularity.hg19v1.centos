@@ -132,6 +132,7 @@ Singularity container containing following apps for ChIP-seq and CUT&RUN process
 	R --slave -e 'install.packages("BiocManager", repos="https://cloud.r-project.org/", quiet=T)'
 	R --slave -e 'library("BiocManager"); BiocManager::install("IRkernel", dependencies=TRUE, update=TRUE, ask=FALSE); IRkernel::installspec(user = FALSE)'
 	R --slave -e 'library("BiocManager"); BiocManager::install("Cairo", dependencies=TRUE, update=TRUE, ask=FALSE)'
+	R --slave -e 'library("BiocManager"); BiocManager::install("csaw", dependencies=TRUE, update=TRUE, ask=FALSE)'
 
 	cd /tmp
 

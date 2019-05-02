@@ -11,7 +11,7 @@ startTime = datetime.now()
 # Change directory within container
 # Change directory within container
 nav1 = os.path.isdir('/data/trim_out')
-nav2 = os.path.isdir('/data/trim_out')
+nav2 = os.path.isdir('/data/fastq')
 if nav1 == True:
 	os.chdir('/data/trim_out')
 	print 'Current working directory is:' +  os.getcwd()
@@ -31,7 +31,7 @@ input_files_R1 = []
 input_files_R2 = []
 
 if len(input_files) == 0:
-	print 'No quality-controlled input files from trim_galore, checking input folder for fastqc output...'
+	print 'No quality-controlled input files from trim_galore, checking input folder for fastq output...'
 	print '\n'
 	input_files = sorted(glob.glob('*.fastq'))
 	if len(input_files) == 0:
@@ -84,7 +84,7 @@ print '\n'
 sam_names = []
 
 for i in range(len(input_files_R1)):
-	sam_name = input_files_R1[i].split('_L0')[0] + '.sam'
+	sam_name = input_files_R1[i].split('.f')[0] + '.sam'
 	sam_names.append(sam_name)
 
 print 'Output sam filenames for data species:'
