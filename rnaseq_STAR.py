@@ -81,13 +81,45 @@ print '\n'.join(input_files_R2)
 print '\n'
 
 #make sam output names
+STAR_prefixes = []
+
+for i in range(len(input_files_R1)):
+	STAR_prefix = input_files_R1[i].split('_R1')[0] + '_'
+	STAR_prefixes.append(STAR_prefix)
+
+print 'Output STAR prefixes:'
+print '\n'.join(STAR_prefixes)
+print '\n'
+
+
 sam_names = []
 
 for i in range(len(input_files_R1)):
-	sam_name = input_files_R1[i].split('.f')[0] + '.sam'
+	sam_name = input_files_R1[i].split('_R1')[0] + '_Aligned.out.sam'
 	sam_names.append(sam_name)
 
-print 'Output sam filenames for data species:'
+STAR_logs = []
+
+for i in range(len(input_files_R1)):
+	STAR_log = input_files_R1[i].split('_R1')[0] + '_Log.out'
+	STAR_logs.append(STAR_log)
+
+for i in range(len(input_files_R1)):
+	STAR_log = input_files_R1[i].split('_R1')[0] + '_Log.final.out'
+	STAR_logs.append(STAR_log)
+
+for i in range(len(input_files_R1)):
+	STAR_log = input_files_R1[i].split('_R1')[0] + '_Log.progress.out'
+	STAR_logs.append(STAR_log)
+
+gene_counts = []
+
+for i in range(len(input_files_R1)):
+	gene_count = input_files_R1[i].split('_R1')[0] + '_ReadsPerGene.out.tab'
+	gene_counts.append(gene_count)
+
+
+print 'Output sam filenames:'
 print '\n'.join(sam_names)
 print '\n'
 
@@ -106,7 +138,7 @@ for i in range(len(input_files_R1)):
 	print 'count = ' +str(i)
 	print '\n'
 	#create string for system command
-	temp_str = 'STAR --runThreadN 16 --genomeDir ' + hg19_index + '--readFilesIn ' + input_files_R1[i] + ' ' + input_files_R2[i] + ' --outFileNamePrefix ' + sam_names[i] + ' --quantMode GeneCounts --twopassMode Basic --outSAMunmapped Within'
+	temp_str = 'STAR --runThreadN 16 --genomeDir ' + hg19_index + ' --readFilesIn ' + input_files_R1[i] + ' ' + input_files_R2[i] + ' --outFileNamePrefix ' + STAR_prefixes[i] + ' --quantMode GeneCounts --twopassMode Basic --outSAMunmapped Within'
 
 	print temp_str
 
@@ -116,6 +148,8 @@ for i in range(len(input_files_R1)):
 
 #make new directory for output
 os.mkdir('/data/sams')
+os.mkdir('/data/sams/logs')
+os.mkdir('/data/sams/counts')
 print 'Current working directory is:' +  os.getcwd()
 print '\n'
 
@@ -125,6 +159,19 @@ print 'Moving sam files to output folder'
 print '\n'
 for i in range(len(sam_names)):
 	shutil.move(sam_names[i], output_dir)
+
+output_dir = '/data/sams/logs'
+print 'Moving sam files to output folder'
+print '\n'
+for i in range(len(STAR_logs)):
+	shutil.move(STAR_logs[i], output_dir)
+
+output_dir = '/data/sams/counts'
+print 'Moving sam files to output folder'
+print '\n'
+for i in range(len(gene_counts)):
+	shutil.move(gene_counts[i], output_dir)
+
 
 print 'Alignment Runtime (hh:mm:ss): ' + str(datetime.now() - startTime)
 print '\n'
@@ -165,7 +212,11 @@ print '\n'
 print 'Converting to bam format'
 print '\n'
 
-bam_names = [f.replace('sam', 'bam') for f in datafiles]
+bam_names = []
+
+for i in range(len(sam_names)):
+	bam_name = sam_names[i].split('_Aligned')[0] + '.bam'
+	bam_names.append(bam_name)
 
 print '\n'
 print '\n'.join(bam_names)
@@ -230,128 +281,40 @@ for i in range(len(sorted_files)):
 	shutil.move(sorted_files[i], output_dir)
 
 	
-##generate bed files from bam files
-print 'Generating bed files representing whole insert from paired end reads in the data files'
+##generate bigwig files from bam files
+print 'Generating bigwig files'
 print '\n'
+
+os.chdir('/data/bams/sorted_bams')
 
 print 'Current working directory is:' +  os.getcwd()
 print '\n'
 
-#generate bed file names
-bed_names = [f.replace('bam', 'bed') for f in datafiles]
-
-#generate file names for length analysis
-lengths_names = [f.replace('bam', 'lengths') for f in datafiles]
-
-#generate bed files with bam_to_bed tool (makes bed12 format)
-for i in range(len(datafiles)):
-	temp_bed = BedTool(datafiles[i]).bam_to_bed(bedpe=True).to_dataframe()
-
-	#need to strip out start and end position of whole insert (bed12 is both reads)
-	#column names actually represent <chrom>, <start of insert>, <end of insert>
-	temp_bed_stripped = temp_bed.iloc[:,[0,1,5]].sort_values(by = ['chrom', 'start', 'strand'])
-
-	#calculate insert size as column 4 and save file with bed_name
-	temp_bed_stripped['length'] = temp_bed_stripped['strand'] - temp_bed_stripped['start']
-
-	temp_bed_stripped.to_csv(bed_names[i], sep="\t", header = False, index = False)
-
-	#analyze lengths of inserts
-	temp_lengths = temp_bed_stripped.groupby(by=['length'])['length'].count()
-
-	temp_lengths.to_csv(lengths_names[i], sep="\t", header = [bed_names[i]], index = True, index_label='length')
+#generate bigwig file names
+bw_names = [f.replace('bam', 'bw') for f in datafiles]
 
 
-print 'Finished generating bed files:'
-print '\n'
-print 'whole insert bed files:' + '\n' + '\n'.join(bed_names)
-print '\n'
+bigwig_string = []
 
-#generate normalized bedgraphs
-print 'Current working directory is:' +  os.getcwd()
-print '\n'
+for i in range(len(sorted_bam_names)):
+		bigwig_string.append('bamCoverage -b '+ sorted_bam_names[i] + ' /data/bams/sorted_bams/' + bw_names[i])
 
-#generate bedgraph names
-bg_names = [f.replace('bed', 'bg') for f in bed_names]
+for item in bigwig_string:
+		check_output(item, shell = True)
 
-print 'Generating average normalized bedgraphs for all the bed files'
-print '\n'
-#count total number of reads in each bed file (before size selection)
-read_count = []
-for item in bed_names:
-	read_count.append(BedTool(item).count())
-
-print read_count
-
-#calculate genome size
-genome_file = chromsizes('hg19')
-DF = pd.DataFrame.from_dict(genome_file, orient='index')
-genome_size = DF[1].sum()
-	
-scaling_factor = []
-for i in range(len(read_count)):
-	scaling_factor.append(float(genome_size) / read_count[i])
-
-for i in range(len(bed_names)):
-	count = str(read_count[i])	
-	print '\n'
-	print 'for ' + bed_names[i] + ' read count:'
-	print count
-	print '\n'
-	print 'scaling factor for ' + bed_names[i] + ' is:'
-	print scaling_factor[i]
-
-#run bedtools genomecov to generate bedgraph files
-for i in range(len(bg_names)):
-	BedTool(bed_names[i]).genome_coverage(bg = True, genome = 'hg19', scale = scaling_factor[i]).moveto(bg_names[i])
-
-print 'Finished generating bedgraph files:'
-print '\n'
-print 'whole insert bedgraph files:' + '\n' + '\n'.join(bg_names)
-print '\n'
-
-##make bigwig files
-print 'Current working directory is:' +  os.getcwd()
-print '\n'
-
-print 'Generating big_wig files for all the bedgraphs'
-print '\n'
-
-#generate bigwig names
-bw_names = [f.replace('bg', 'bw') for f in bg_names]
-
-#run bedgraph_to_bigwig tool
-for i in range(len(bg_names)):
-	bedgraph_to_bigwig(BedTool(bg_names[i]), 'hg19', bw_names[i])
 
 print 'Finished generating bigwig files:'
 print '\n'
 print 'whole insert bigwig files:' + '\n' + '\n'.join(bw_names)
 print '\n'
 
-os.mkdir('/data/beds')
-os.mkdir('/data/beds/lengths')
-os.mkdir('/data/bedgraphs')
 os.mkdir('/data/bigwigs')
-
-output_dir0 = '/data/beds'
-output_dir1 = '/data/beds/lengths'
-for i in range(len(bed_names)):
-	shutil.move(bed_names[i], output_dir0)
-for i in range(len(lengths_names)):
-	shutil.move(lengths_names[i], output_dir1)
-
-print 'Moving bedgraphs to output folder'
-print '\n'
-output_dir4 = '/data/bedgraphs'
-for i in range(len(bg_names)):
-	shutil.move(bg_names[i], output_dir4)
 
 print 'Moving bigwigs to output folder'
 print '\n'
-output_dir7 = '/data/bigwigs'
+output_dir0 = '/data/bigwigs'
 for i in range(len(bw_names)):
-	shutil.move(bw_names[i], output_dir7)
+	shutil.move(bw_names[i], output_dir0)
 
 
 print 'Finished'
