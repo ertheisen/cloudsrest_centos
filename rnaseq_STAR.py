@@ -297,7 +297,7 @@ bw_names = [f.replace('bam', 'bw') for f in datafiles]
 bigwig_string = []
 
 for i in range(len(sorted_bam_names)):
-		bigwig_string.append('bamCoverage -b '+ sorted_bam_names[i] + ' /data/bams/sorted_bams/' + bw_names[i])
+		bigwig_string.append('bamCoverage -b '+ sorted_bam_names[i] + ' -o /data/bams/sorted_bams/' + bw_names[i])
 
 for item in bigwig_string:
 		check_output(item, shell = True)
